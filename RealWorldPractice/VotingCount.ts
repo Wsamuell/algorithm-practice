@@ -55,83 +55,74 @@
 //
 
 // SOLUTION
-// function tallyRound(round: number, )
 
-function checkDrawOrWinner(arr: number[]): {
-  winners: number[];
-  losers: number[];
-} {
+const checkForWinnerAndLosers = (
+  candidateVotes: number[]
+): { winners: number[]; losers: number[] } => {
+  let winners: number[] = [];
   let losers: number[] = [];
   let highest = 0;
-  let winners: number[] = [];
-  for (let i = 0; i < arr.length; i++) {
-    // ___ PSA sam find a way to return only the index of the item not the value.
-    // if current item is greater than the highest
-    // set draw to 0
-    // set hhighest to item
-    // returnArr = [highest]
-    // if current item is equal to highest
-    // add index to the returnArr
-    // set draw++
 
-    // if curr is lower than highest then do nothing
-    if (arr[i] > highest) {
+  for (let i = 0; i < candidateVotes.length; i++) {
+    if (candidateVotes[i] > highest) {
+      highest = candidateVotes[i];
       losers = [...losers, ...winners];
-      highest = arr[i];
       winners = [i];
-    } else if (arr[i] === highest) {
-      winners.push(i);
-    } else if (arr[i] < highest) losers.push(i);
+    } else if (candidateVotes[i] < highest) {
+      losers.push(i);
+    } else winners.push(i);
   }
+
   return { winners, losers };
-}
-// console.log(checkDrawOrWinner([3,5,5,2,7,7]))
+};
 
-function election(candidates: string[], votes: number[][]): string {
+const election = (candidates: string[], votes: number[][]): string => {
   let rounds = 0;
+  let eliminatedCandidates: string[] = [];
+
   while (rounds < candidates.length) {
-    // create an array with empty votes that equals the amount of candidates we have
-    let candidateVotes: number[] = new Array(candidates.length).fill(0);
-
-    //  For each iteration grab the candidate voter voted for
+    let candidatesVotes: number[] = new Array(candidates.length).fill(0);
+    // each loop is based on candidates
     for (let i = 0; i < votes.length; i++) {
-      candidateVotes[votes[i][rounds]]++;
+      let vote = votes[i][rounds];
+      let nextVote = votes[i][rounds + 1];
+      // this accounts for eliminated votes but doesnt account for votes if next vote is eliminated
+      if (
+        eliminatedCandidates.includes(candidates[vote]) &&
+        nextVote !== undefined
+      ) {
+        eliminatedCandidates.includes(candidates[nextVote]) &&
+        nextVote !== undefined
+          ? console.log('candidate vote already eliminated')
+          : candidatesVotes[nextVote]++;
+      } else candidatesVotes[vote]++;
     }
-
-    // map through the votes for the round and see result string
-    candidateVotes.map((num, index) => {
+    candidatesVotes.map((num, index) => {
       const percentage = ((num / votes.length) * 100).toFixed(2);
       console.log(`Round:${rounds + 1}: ${percentage}% ${candidates[index]}`);
     });
+    const { winners, losers } = checkForWinnerAndLosers(candidatesVotes);
 
-    // grab the index for the winner or the index for who tied
-    const { winners, losers } = checkDrawOrWinner(candidateVotes);
-    // console.log(winners, losers)
-
-    // return winner if we have one 1 candidate left
     if (winners.length === 1) {
-      console.log(`${candidates[winners[0]]} is the winner`);
-      return candidates[winners[0]];
+      return `${candidates[winners[0]]} won the election`;
     }
-
-    // remove all candidates that lost
+    // Cant delete a candidate, need to figure out a way to give the canduidate that lost the next vote
+    // eliminate losers
     losers.map((index) => {
       console.log(`Eliminating ${candidates[index]}`);
-      candidates = candidates.filter((_, i) => i !== index);
+      eliminatedCandidates.push(candidates[index]);
+      // remove number that isnt loser
+      // candidates = candidates.filter((_, i) => i !== index)
     });
-    console.log(candidates);
 
-    // Start next round voting
     rounds++;
   }
-  // return candidates[0]
   if (candidates.length > 1) {
-    const tiedCandidates = candidates.join(', ');
-    return `We have a voting tie between ${tiedCandidates}`;
-  } else return candidates[0];
-}
+    const joinAllCandidates = candidates.join(', ');
+    return `We have a tie between ${joinAllCandidates}`;
+  } else return `${candidates[0]} Won the Election`;
+};
 
-// Note: There is a problem thats not serious, when a candidate gets eleminated we need to also remove the votes for removed candiates as well
 console.log(
   election(
     ['Knuth', 'Turing', 'Church'],
